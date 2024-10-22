@@ -3,28 +3,33 @@
 # Compiler
 CC = g++
 
-# INCDIR = 
-# LIBDIR = 
-
-# Extra flags for the GSL package
-EXTRA_CFLAGS=-stdlib=libstdc++ -stdlib=libc++
-#INCLUDE = -I/usr/include/gsl
-
 INCLUDE = -I include 
 
 RM = rm
 
-# Source files
-SRC = main/CollCalc.cpp
-OBJ = $(SRC:.cpp=.o)
-
-# Directory to save the executables
-TARGET_DIR = bin
-
-
+GSL_LIBS = -lgsl -lgslcblas
 #EXTRA_LIBS = -lc++ -framework Foundation
 #GSL_LIBS = -L/usr/lib/x86-64_linux-gnu -lgsl -lgslcblas -lm
-GSL_LIBS = -lgsl -lgslcblas
+
+# Optimization flags
+OPTIM = -Ofast 
+#OPTIM = -O3
+
+# Parallelization flags
+MP = -fopenmp # requires OpenMP
+
+CFLAGS = $(OPTIM) $(MP) # remove the MP flag if multithreading is not required
+
+# Extra flags for the GSL package
+#EXTRA_CFLAGS = -stdlib=libstdc++ -stdlib=libc++
+
+# Source files
+MAIN = main/CollCalc.cpp
+SRC = source/Annihilation.cpp
+# Directory with the process files
+PROCESS_DIR = processes
+# Directory to save the executables
+TARGET_DIR = bin
 
 
 # Ensure the target directory exists
@@ -33,17 +38,22 @@ $(TARGET_DIR):
 
 #all:
 
-# standard 2->2 annihilation
-Annihilation: main/CollCalc.cpp source/Annihilation.cpp processes/Axion_coannihilation.cpp | $(TARGET_DIR)
-	$(CC) $(INCLUDE) $^ -Ofast -fopenmp -o $@ ${GSL_LIBS} -DINT3 #-pg -fopenmp
+.PHONY: all clean
 
-# one DM state (like for axions)
-Co-annihilation: main/CollCalc.cpp source/Annihilation.cpp processes/Axion_coannihilation.cpp | $(TARGET_DIR)
-	$(CC) $(INCLUDE) $^ -Ofast -fopenmp -o $@ ${GSL_LIBS} -DINT4 #-pg -fopenmp
+# CONDFLAG is the conditional compiler flag (see Collcalc.cpp)
 
-%.o : %.cpp
-	$(CC) $(INCLUDE) -c $< -O3 -fopenmp -o $@ ${GSL_LIBS} #${INCLUDE}
-	#-L${LIBDIR} ${WSTP_LIB} ${EXTRA_LIBS} -o $@ ${GSL_LIBS}
+# standard 2->2 annihilation (2 X states)
+annihilation: CONDFLAG = -DINT3 # 3-dimensional integral
+annihilation: $(TARGET_DIR)/$(process)_ann
 
-clean : 
-	@ ${RM} -rf *.o #*tm.cpp C0 
+# one X state
+co-annihilation: CONDFLAG = -DINT4 # 4-dimensional integral
+co-annihilation: $(TARGET_DIR)/$(process)_coann
+
+$(TARGET_DIR)/%: $(MAIN) $(SRC) $(PROCESS_DIR)/$(process).cpp | $(TARGET_DIR)
+	$(CC) $(INCLUDE) $^ $(CFLAGS) -o $@ $(GSL_LIBS) $(CONDFLAG) # -pg
+
+# make annihilation process=file_name (without the extension)	
+
+clean:
+	@ $(RM) $(TARGET_DIR)/*
