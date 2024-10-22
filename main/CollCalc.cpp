@@ -37,7 +37,6 @@ void fill_vector (std::vector<double> * vec, std::string filename)
 	        // Read numbers from the line into the vector
 	        while (iss >> num) { vec->push_back(num); }
     	}
-    	//else { printf("Error: Empty file.\n");  }  
     }
     else{ printf("Error: Unable to open input file.\n"); }
 
@@ -47,7 +46,7 @@ void fill_vector (std::vector<double> * vec, std::string filename)
 
 // Mass of the heaviest particle in the reaction
 double Mmax;
-// Signs in front of the PDF (depending on the statistics)
+// Signs in front of the DF (depending on the statistics)
 double sign_fi, sign_fj, sign_fk;
 // Desired relative accuracies for each integration
 double rel_acc_ek, rel_acc_cos_s, rel_acc_cos_t, rel_acc_cos_phi; 
@@ -67,20 +66,17 @@ int main(int argc, char* argv[])
 
 	double rel_err, result; // relative error of the integration and result
 
-	std::string input_filepath = "parameters";
-	std::string output_filepath = "bin";
+	std::string input_filepath = "../parameters";
+	std::string output_filepath = "../results";
 
 	// Find the mass of the heaviest particle (to define x)
 	Mmax = std::max(std::max(Mi,Mj),std::max(Mk,Mx));
 
-	// Assign the signs to the PDFs
+	// Assign the signs to the distribution functions (DF)
 	sign_fi = assign_sign(s_i);
 	sign_fj = assign_sign(s_j);
 	sign_fk = assign_sign(s_k);
 
-	
-	// !!! CHANGE THE NAMES OF THESE PARAMETERS AND TRY TO UNIFY THEIR USAGE !!!
-	
 	// Desired relative accuracy of the integration
 	rel_acc_cos_s = 0.1;
 	rel_acc_cos_t = 0.1;
@@ -120,11 +116,8 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Wrong number of input arguments!\n Should be 3 {x,q,p} \n");
+			printf("Wrong number of input arguments!\n Should be 4 {x,q,p,rel_acc} \n");
 		}
-
-		// ONE CAN ADD HERE SOMETHING SIMILAR TO WHAT IS DONE IN THE INT4 PIECE OF CODE BELOW - RUNNING IN PARALLEL OVER RANGE OF X, Q AND P WHEN JUST ONE ARGUMENT IS PROVIDED
-
 
 	#elif defined(INT4)
 	// For a I4 integral we need to provide 2 physical parameters: x and q + one numerical parameter that is the desired accuracy
@@ -167,12 +160,13 @@ int main(int argc, char* argv[])
 			}
 
 			// Writing to file
-			char filename[64];
-			snprintf(filename, sizeof(filename), "bin/CollTerm%s.csv", pr_name.c_str());
+			//char filename[64];
+			//snprintf(filename, sizeof(filename), "CollTerm%s.dat", pr_name.c_str());
 
+			std::string path_to_file = output_filepath + "/CollTerm" + pr_name + ".dat";
 
 		    FILE *fp; // initiate a file
-		    fp = fopen(filename,"w"); // open the file
+		    fp = fopen(path_to_file.c_str(),"w"); // open the file
 
 		    // Writing the table to the file using nested loops
 			for (int i = 0; i < Nx; i++)
@@ -186,11 +180,10 @@ int main(int argc, char* argv[])
 
 			fclose(fp);
 
-
 		}
 		else 
 		{
-			printf("Wrong number of input arguments!\n Should be either 2 {x,q} or 6 {xmin,xmax,qmin,qmax,Nx,Nq}\n");
+			printf("Wrong number of input arguments!\n Should be either 3 {x,q,rel_acc} or 1 {rel_acc} \n");
 		}
 
 	#endif
