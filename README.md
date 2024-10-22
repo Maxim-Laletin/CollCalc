@@ -3,7 +3,7 @@ CollCalc is a C++ code for fast computation of collision integrals
 
 ## Make instructions
 
-`make annihilation process=Primakoff`
+```make annihilation process=Primakoff```
 "Annihilation" creates executables to compute 3-dimensional integrations for annihilation collision term (two unknown distribution functions), "co-annihilation" - 4-dimensional integrations for co-annihilation collision term (one unknown distribution functions). The name of the process file (without the extension, stored in the "process" directory) should follow `process=`. The executables are stored in "bin" directory. 
 
 ## Running 
