@@ -21,8 +21,8 @@ static double error_bulk;
 
 // **********************  Annihilations  **********************
 
-// For annihilation m_k = m_x, so both k and x represent a particle with an unknown PDF
-// and i and j are some particles with an equilibrium PDF
+// For annihilation m_k = m_x, so both k and x represent a particle with an unknown distribution function (DF)
+// and i and j are some particles with an equilibrium DF
 
 
 // Keep the integration parameters initialized in the root integral
@@ -70,41 +70,19 @@ double integral_cos_s (double x, double q, double p, double &relerror)
 	double cos_s_max = fmin( 1.0, (sbase - pow(mi+mj,2))/(2*q*p) );
 	// cos_s_max is obtained from the condition that s(cos_s) > (mi+mj)^2
 
-	// CHECK ALL THE PROPER INTEGRATION LIMITS HERE
-
-	double cos_s_min = -1.0; // CHECK AND CHANGE !!!
+	double cos_s_min = -1.0;
 	
-
 	double integral_cos_s_res = 0.0; // store the result of integration
 	double quad_error = 0.0; // store the absolute error of the integration
 	relerror = 0.0; // store the relative error of the integration
 
-	if (cos_s_min < cos_s_max) // CHECK AND CHANGE !!!
+	if (cos_s_min < cos_s_max)
 	{
-
 
 		int gsl_GK_key_cos_s = 1;
 		int gsl_GK_key_cos_t = 1;
 		int gsl_GK_key_cos_phi = 1;
 	
-		// // (WE NEED TO IMPOSE THAT THE USER CAN SWITCH THIS PROCEDURE OFF AND USE THE KEYS THAT THEY PROVIDED)
-		// // Regulate the keys to enhance the speed of the integral calculation
-		// if (ek_max/ek_min >= 1E+4)
-		// {
-		// 	gsl_GK_key_ek = 5;
-		// 	gsl_GK_key_cos_s = 3;
-		// } 
-		// else if (ek_max/ek_min >= 1000) 
-		// {
-		// 	gsl_GK_key_ek = 4;
-		// 	gsl_GK_key_cos_s = 3;
-		// }
-		// else if (ek_max/ek_min > 100)
-		// {
-		// 	gsl_GK_key_ek = 3;
-		// 	gsl_GK_key_cos_s = 2;
-		// }
-
 		
 		// Allocate memory for integration (mem_alloc is the size)
 		gsl_integration_workspace * w1 = gsl_integration_workspace_alloc (mem_alloc_cos_s);
@@ -135,7 +113,6 @@ double integral_cos_s (double x, double q, double p, double &relerror)
 		gsl_integration_workspace_free(w3);
 
 		relerror = quad_error/integral_cos_s_res; // relative error of the integral calculation
-		// [PROBLEM CAN APPEAR IF INTEGRAL = 0]
 	}
 
 	return T*p*integral_cos_s_res/(4*pow(2*M_PI,4)); 
@@ -145,8 +122,8 @@ double integral_cos_s (double x, double q, double p, double &relerror)
 
 // **********************  Co-annihilations  **********************
 
-// For co-annihilation only x represents a particle with an unknown PDF,
-// while i, j adn k are some particles with an equilibrium PDF
+// For co-annihilation only x represents a particle with an unknown DF,
+// while i, j adn k are some particles with an equilibrium DF
 
 
 // Find the (allowed) top limit of Ek
@@ -164,11 +141,11 @@ double find_ek_max(double x, double q, double ek_min, double mi, double mj, doub
 
 	double ei_plasma = e_CM(s,mi,mj)*( (ek+ex)/sqrt(s) );
 
-	// the product of the PDFs at minimal ek
-	double pdf_prod_max = 1.0/( (exp(ei_plasma)+sign_fi)*(exp(ei_plasma)+sign_fj) );
+	// the product of the DFs at minimal ek
+	double df_prod_max = 1.0/( (exp(ei_plasma)+sign_fi)*(exp(ei_plasma)+sign_fj) );
 	// 
 	const double max_exp_index = 15.0;
-	double ek_max = max_exp_index - log(pdf_prod_max) - ex; 
+	double ek_max = max_exp_index - log(df_prod_max) - ex; 
 
 	if (ek_max > 700.0 - ex) 
 	{
@@ -211,8 +188,6 @@ double integral_ek (double x, double q, double &relerror)
 	{
 
 		// Generally, should be Inf
-		//double ek_max = 20*ek_min;
-
 		double ek_max = find_ek_max(x,q,ek_min,mi,mj,mk,mx);
 
 		int gsl_GK_key_ek = 2;
@@ -220,8 +195,6 @@ double integral_ek (double x, double q, double &relerror)
 		int gsl_GK_key_cos_t = 1;
 		int gsl_GK_key_cos_phi = 1;
 	
-		// (WE NEED TO IMPOSE THAT THE USER CAN SWITCH THIS PROCEDURE OFF AND USE THE KEYS THAT THEY PROVIDED)
-		// Regulate the keys to enhance the speed of the integral calculation
 		if (ek_max/ek_min >= 1E+4)
 		{
 			gsl_GK_key_ek = 5;
@@ -273,7 +246,7 @@ double integral_ek (double x, double q, double &relerror)
 		gsl_integration_workspace_free(w4);
 
 		relerror = quad_error/integral_ek_res; // relative error of the integral calculation
-		// [PROBLEM CAN APPEAR IF INTEGRAL = 0]
+
 	}
 
 	return (T*T)*integral_ek_res/(4*pow(2*M_PI,4)); // T^2 times the integral
@@ -299,7 +272,6 @@ double integrand_ek (double ek, void * params)
 
 	// Dereference the pointer to the integrand parameters
 	struct general_parameters g_p = * (struct general_parameters *) params;
-	//std::vector<double> pars = * (struct general_parameters *) params.pars;
 	g_p.pars.reserve(11); // reserve more space for a vector of double-valued parameters
 
 	// pars = {mi,mj,mk,mx,T^2,q,ex};
@@ -438,16 +410,7 @@ double integrand_cos_t (double cos_t, void * params)
 	// pars = {mi,mj,mk,mx,T^2,q,ex,p,ek,sbase,esum,s,q_CM,pi_CM,tbase,A1,A2,A3,A4};
 
 	// References to the values of parameters pointed by g_p
-	// const double &mi = g_p.pars[0];
-	// const double &mj = g_p.pars[1];
-	// const double &mk = g_p.pars[2];
-	// const double &mx = g_p.pars[3];
 	const double &T2 = g_p->pars[4]; // temperature squared
-	// const double &q = g_p.pars[5];
-	// const double &ex = g_p.pars[6];
-	// const double &p = g_p.pars[7];
-	// const double &ek = g_p.pars[8];
-	//const double &sbase = g_p.pars[9];
 	const double &esum = g_p->pars[10];
 	const double &s = g_p->pars[11];
 	const double &q_CM = g_p->pars[12];
@@ -465,31 +428,18 @@ double integrand_cos_t (double cos_t, void * params)
 	// Mandelstam t variable (in CM frame)
 	double t = tbase + 2*q_CM*pi_CM*cos_t;
 
-	
 	//Factors for calculation of Ei and Ej in the plasma frame (independent of cos_phi) (see below)
 	double E1 = A1 + A3*cos_t;
 	double E2 = A2 - A3*cos_t;
 	double E3 = A4*sqrt(1.0 - cos_t*cos_t);
 
-	
 	double integral_cosphi;
 	
-	
-	// THIS IS JUST SOME TEMPORARY ADAPTATIONS (WITHOUT ANY DEFINITE REASONING) TO INCREASE THE SPEED OF THE COMPUTATION
-	// CAN BE SWITCHED OFF
 	if (E1 > 5 && E2 > 5 && E1 > E3)
  	{
 		integral_cosphi = M_PI*exp( -esum );
 	}
-	else if (E1 < 5 && E2 < 5 && E1 > E3 && E3 < 1E-2) // JUST A TEMPORARY SOLUTION THAT BOOSTS THE SPEED BY A FACTOR OF 2 OR SO
-	{
-		integral_cosphi = M_PI/( (exp(E1)+sign_fi)*(exp(E2)+sign_fj) );
-	}
-	else if (E1 > 5 && E2 < 5 && E3 < 0.1) // 0.1 - ALSO A TEMPORARY SOLUTION
-	{
-		integral_cosphi = M_PI*exp(-E1)/sqrt(1-2*exp(E2)-(E3*E3-1)*exp(2*E2));
-	}
-	else // MAIN CONIDITION - EVERYTHING ABOVE CAN BE SWITCHED OFF
+	else
 	{
 		
 		// Create a double vector of parameters for cos_phi integrand (just three values)
